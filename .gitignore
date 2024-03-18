@@ -1,2 +1,8 @@
 # for virtual environment
 venv
+
+# for pycache
+*.pyc
+
+# for test
+test.py
