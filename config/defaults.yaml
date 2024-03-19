@@ -1,0 +1,25 @@
+defaults:
+  - _self_
+
+hydra:
+  run:
+    dir: logs/${basename}/${now:%Y%m%d-%H%M}
+
+seed: 42
+
+basename: Normal
+
+_executer:
+  _target_: dreamer.Executer
+  env_name: HalfCheetah-v4
+  env_config:
+    width: 64
+    height: 64
+    forward_reward_weight: 1.0
+  dreamer_config:
+    device: cuda
+  buffer_capacity: 200000
+  log_dir: logs/${basename}/${now:%Y%m%d-%H%M}
+
+learn_config:
+  all_episodes: 1000

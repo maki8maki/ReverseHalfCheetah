@@ -9,3 +9,7 @@ test.py
 
 # for logs
 logs
+
+# for parameters
+config/*.yaml
+!config/defaults.yaml
