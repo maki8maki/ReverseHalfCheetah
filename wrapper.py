@@ -5,8 +5,9 @@ class ImageObservationWrapper(gym.ObservationWrapper):
     def __init__(self, env: gym.Env):
         super().__init__(env)
 
-        obs, _ = self.env.reset()
-        self.observation_space = gym.spaces.Box(low=0, high=255, shape=obs.shape, dtype='uint8')
+        self.env.reset()
+        image = self.env.render()
+        self.observation_space = gym.spaces.Box(low=0, high=255, shape=image.shape, dtype='uint8')
     
     def observation(self, observation: Any) -> Any:
         return self.env.render()
