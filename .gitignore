@@ -6,3 +6,6 @@ venv
 
 # for test
 test.py
+
+# for logs
+logs
