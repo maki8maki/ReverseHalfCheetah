@@ -2,6 +2,7 @@ import numpy as np
 import os
 import time
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 from dreamer.buffer import ReplayBuffer
 from dreamer.core import Agent, Dreamer
@@ -37,8 +38,7 @@ class Executer():
                 done = terminated or truncated
                 self.buffer.push(obs, action, reward, done)
                 obs = next_obs
-        for episode in range(start_episodes, all_episodes):
-            start = time.time()
+        for episode in tqdm(range(start_episodes, all_episodes)):
             policy = Agent(self.encoder, self.rssm, self.action_model)
 
             obs, _ = self.env.reset()
@@ -55,10 +55,8 @@ class Executer():
             
             writer.add_scalar('train/total_reward', total_reward, episode)
             if (self.verbose):
-                print('episode [%4d/%4d] is collected. Total reward is %f' % (episode+1, all_episodes, total_reward))
-                print('elasped time for interaction: %.2fs' % (time.time() - start))
+                tqdm.write('episode [%4d/%4d] is collected. Total reward is %f' % (episode+1, all_episodes, total_reward))
 
-            start = time.time()
             for update_step in range(collect_interval):
                 observations, actions, rewards, _ = self.buffer.sample(batch_size, chunk_length)
 
@@ -71,15 +69,12 @@ class Executer():
                     writer.add_scalar(f'train/{key}', value.item(), total_update_step)
                 
                 if (self.verbose):
-                    print(log)
-            if (self.verbose):
-                print('elasped time for update: %.2fs' % (time.time() - start))
+                    tqdm.write(log)
 
             if (episode+1) % eval_interval == 0:
-                total_reward, t = self.evaluate()
+                total_reward = self.evaluate()
                 writer.add_scalar('test/total_reward', total_reward, episode+1)
-                print('Total test reward at episode [%4d/%4d] is %f' % (episode+1, all_episodes, total_reward))
-                print('elasped time for test: %.2fs' % t)
+                tqdm.write('Total test reward at episode [%4d/%4d] is %f' % (episode+1, all_episodes, total_reward))
             
             if (episode+1) % model_save_interval == 0:
                 self.save(self.log_dir, 'episode_%04d.pth' % (episode+1))
@@ -87,7 +82,6 @@ class Executer():
     
     def evaluate(self):
         policy = Agent(self.encoder, self.rssm, self.action_model)
-        start = time.time()
         obs, _ = self.env.reset()
         done = False
         total_reward = 0.0
@@ -97,7 +91,7 @@ class Executer():
             done = terminated or truncated
             obs = next_obs
             total_reward += reward
-        return total_reward, time.time() - start
+        return total_reward
     
     def save(self, log_dir='logs', name='params.pth'):
         os.makedirs(log_dir, exist_ok=True)
