@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from dreamer.buffer import ReplayBuffer
 from dreamer.core import Agent, Dreamer
-from utils import make_env
+from utils import make_env, anim
 
 class Executer():
     def __init__(self, env_name: str, env_config: dict={}, dreamer_config: dict={}, buffer_capacity=200000, log_dir='logs', verbose=False):
@@ -95,6 +95,27 @@ class Executer():
                 total_reward += reward
         self.dreamer.train()
         return total_reward / eval_num
+    
+    def view(self):
+        self.dreamer.eval()
+        policy = Agent(self.encoder, self.rssm, self.action_model)
+        total_reward = 0.0
+        obs, _ = self.env.reset()
+        frames = [obs]
+        step = 0
+        titles = [f'Step {step}']
+        done = False
+        while not done:
+            step += 1
+            action = policy(obs, training=False)
+            next_obs, reward, terminated, truncated, _ = self.env.step(action)
+            done = terminated or truncated
+            obs = next_obs
+            total_reward += reward
+            frames.append(obs)
+            titles.append(f'Step {step}')
+        print(total_reward)
+        anim(frames=frames, titles=titles)
     
     def save(self, log_dir='logs', name='params.pth'):
         os.makedirs(log_dir, exist_ok=True)
