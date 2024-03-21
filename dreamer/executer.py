@@ -9,13 +9,13 @@ from dreamer.core import Agent, Dreamer
 from utils import make_env
 
 class Executer():
-    def __init__(self, env_name: str, env_config: dict={}, dreamer_config: dict={}, buffer_capacity=200000, log_dir='logs', vervose=False):
+    def __init__(self, env_name: str, env_config: dict={}, dreamer_config: dict={}, buffer_capacity=200000, log_dir='logs', verbose=False):
         self.env = make_env(env_name, env_config)
         self.dreamer = Dreamer(self.env.action_space.shape[0], **dreamer_config)
         self.buffer = ReplayBuffer(buffer_capacity, self.env.observation_space.shape, self.env.action_space.shape[0])
 
         self.log_dir = log_dir
-        self.verbose = vervose
+        self.verbose = verbose
         self.make_aliases()
     
     def make_aliases(self):
@@ -26,7 +26,7 @@ class Executer():
         self.value_model = self.dreamer.value_model
         self.action_model = self.dreamer.action_model
     
-    def learn(self, start_episodes=5, all_episodes=300, eval_interval=10, model_save_interval=20, collect_interval=100, action_noise_var=0.3,
+    def learn(self, start_episodes=5, all_episodes=300, eval_interval=10, eval_num=5, model_save_interval=20, collect_interval=100, action_noise_var=0.3,
               batch_size=50, chunk_length=50, free_nats=3, clip_grad_norm=100, imagination_horizon=15, gamma=0.9, lambda_=0.95):
         writer = SummaryWriter(self.log_dir)
         for episode in range(start_episodes):
@@ -72,7 +72,7 @@ class Executer():
                     tqdm.write(log)
 
             if (episode+1) % eval_interval == 0:
-                total_reward = self.evaluate()
+                total_reward = self.evaluate(eval_num)
                 writer.add_scalar('test/total_reward', total_reward, episode+1)
                 tqdm.write('Total test reward at episode [%4d/%4d] is %f' % (episode+1, all_episodes, total_reward))
             
@@ -80,18 +80,21 @@ class Executer():
                 self.save(self.log_dir, 'episode_%04d.pth' % (episode+1))
         writer.close()
     
-    def evaluate(self):
+    def evaluate(self, eval_num=5):
+        self.dreamer.eval()
         policy = Agent(self.encoder, self.rssm, self.action_model)
-        obs, _ = self.env.reset()
-        done = False
         total_reward = 0.0
-        while not done:
-            action = policy(obs, training=False)
-            next_obs, reward, terminated, truncated, _ = self.env.step(action)
-            done = terminated or truncated
-            obs = next_obs
-            total_reward += reward
-        return total_reward
+        for _ in range(eval_num):
+            obs, _ = self.env.reset()
+            done = False
+            while not done:
+                action = policy(obs, training=False)
+                next_obs, reward, terminated, truncated, _ = self.env.step(action)
+                done = terminated or truncated
+                obs = next_obs
+                total_reward += reward
+        self.dreamer.train()
+        return total_reward / eval_num
     
     def save(self, log_dir='logs', name='params.pth'):
         os.makedirs(log_dir, exist_ok=True)
