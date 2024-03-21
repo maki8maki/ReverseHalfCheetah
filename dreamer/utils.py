@@ -1,7 +1,7 @@
 import numpy as np
 import torch as th
 
-def normalize_observation(observation: np.ndarray, min=0, max=255):
+def normalize_observation(observation: np.ndarray, min=0.0, max=255.0):
     obs = observation.astype(np.float32)
     normalized_obs = (obs - min) / (max - min) - 0.5
     return normalized_obs

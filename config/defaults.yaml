@@ -17,9 +17,30 @@ _executer:
     height: 64
     forward_reward_weight: 1.0
   dreamer_config:
+    channel: 3
+    state_dim: 30
+    rnn_hidden_dim: 200
+    model_lr: 6e-4
+    value_lr: 8e-5
+    action_lr: 8e-5
+    eps: 1e-4
     device: cuda
-  buffer_capacity: 200000
+  buffer_capacity: 2000000
   log_dir: logs/${basename}/${now:%Y%m%d-%H%M}
+  verbose: False
 
 learn_config:
+  start_episodes: 5
   all_episodes: 1000
+  eval_interval: 10
+  eval_num: 5
+  model_save_interval: 100
+  collect_interval: 100
+  action_noise_var: 0.3
+  batch_size: 50
+  chunk_length: 50
+  free_nats: 3
+  clip_grad_norm: 100
+  imagination_horizon: 15
+  gamma: 0.9
+  lambda_: 0.95
