@@ -7,6 +7,8 @@ hydra:
 
 seed: 42
 
+w_env_model: False
+
 basename: Normal
 
 _executer:
@@ -29,7 +31,7 @@ _executer:
   log_dir: logs/${basename}/${now:%Y%m%d-%H%M}
   verbose: False
 
-learn_config:
+learn_kwargs:
   start_episodes: 5
   all_episodes: 1000
   eval_interval: 10

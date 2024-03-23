@@ -9,9 +9,11 @@ from utils import set_seed
 @dataclasses.dataclass
 class Config:
     basename: str
+    w_env_model: bool = False
+    model_name: str = None
     executer: dreamer.Executer = dataclasses.field(default=None)
     seed: dataclasses.InitVar[int] = None
-    learn_config: dict = dataclasses.field(default_factory=dict)
+    learn_kwargs: dict = dataclasses.field(default_factory=dict)
 
     def __post_init__(self, seed):
         if seed is not None:
