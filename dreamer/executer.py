@@ -1,6 +1,5 @@
 import numpy as np
 import os
-import time
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
